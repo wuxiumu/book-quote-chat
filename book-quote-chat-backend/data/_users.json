@@ -1,0 +1,20 @@
+[
+  {
+    "id": "5791d72a-a9b0-433f-9d1a-e2985a99440c",
+    "name": "123",
+    "avatar": "https://api.multiavatar.com/php.svg",
+    "email": "wuxiumu@163.com",
+    "status": "normal",
+    "group": "user",
+    "created": 1751079873
+  },
+  {
+    "id": "5339a25c-6eec-4161-b072-36361e289208",
+    "name": "Go小将9752",
+    "avatar": "https://api.multiavatar.com/aric.svg",
+    "email": "wuxiumu1@163.com",
+    "status": "banned",
+    "group": "user",
+    "created": 1751080708
+  }
+]

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"book-quote-chat-backend/service"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,7 +12,7 @@ import (
 	"time"
 )
 
-// 上传图片（头像/聊天图片通用）
+// 上传文件（图片）
 func HandleUpload(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(10 << 20) // 10MB
 	if err != nil {
@@ -25,8 +26,11 @@ func HandleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	// 校验扩展名
 	ext := strings.ToLower(filepath.Ext(handler.Filename))
-	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".gif" && ext != ".webp" {
+	//打印日志
+	//fmt.Println(ext)
+	if !IsAllowedUploadExt(ext) {
 		http.Error(w, "不支持的文件类型", 400)
 		return
 	}
@@ -63,4 +67,16 @@ func RandString(n int) string {
 		time.Sleep(1)
 	}
 	return string(b)
+}
+
+// 判断是否允许的扩展名
+func IsAllowedUploadExt(ext string) bool {
+	for _, allowed := range service.AllowedUploadExts {
+		// 打印日志
+		//fmt.Println(allowed)
+		if ext == allowed {
+			return true
+		}
+	}
+	return false
 }

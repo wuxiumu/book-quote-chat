@@ -1,8 +1,11 @@
 package api
 
 import (
+	"book-quote-chat-backend/model"
 	"book-quote-chat-backend/service"
+	"book-quote-chat-backend/store"
 	"encoding/json"
+	"math/rand"
 	"net/http"
 	"strconv"
 )
@@ -51,4 +54,42 @@ func HandleAdminListQuotes(w http.ResponseWriter, r *http.Request) {
 		"list":  list,
 		"total": total,
 	})
+}
+
+// api/quote.go
+func HandleGetRandomQuotes(w http.ResponseWriter, r *http.Request) {
+	quotes, err := store.LoadQuotes()
+	if err != nil {
+		http.Error(w, "数据加载失败", 500)
+		return
+	}
+	// 过滤已审核通过
+	var approved []model.Quote
+	for _, q := range quotes {
+		if q.Status == "approved" {
+			approved = append(approved, q)
+		}
+	}
+	// 随机打乱
+	rand.Shuffle(len(approved), func(i, j int) { approved[i], approved[j] = approved[j], approved[i] })
+	// limit=10
+	limit := 10
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if n, err := strconv.Atoi(l); err == nil && n > 0 {
+			limit = n
+		}
+	}
+	if limit > len(approved) {
+		limit = len(approved)
+	}
+	// 只返回 text、book 字段（前端只展示这两个字段）
+	type simpleQuote struct {
+		Content string `json:"text"`
+		Book    string `json:"book"`
+	}
+	var result []simpleQuote
+	for i := 0; i < limit; i++ {
+		result = append(result, simpleQuote{Content: approved[i].Content, Book: approved[i].Book})
+	}
+	_ = json.NewEncoder(w).Encode(result)
 }

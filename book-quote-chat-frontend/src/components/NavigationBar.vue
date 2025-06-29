@@ -7,11 +7,29 @@
       <ul class="menu menu-horizontal px-1">
         <li><router-link to="/quotes">金句</router-link></li>
         <li><router-link to="/chat">群聊</router-link></li>
-        <li><router-link to="/friends">好友</router-link></li>
       </ul>
     </div>
-    <div>
+
+    <div class="menu menu-horizontal px-1">
       <button class="btn btn-sm btn-outline" @click="showContact = true">联系我们</button>
+    </div>
+    <div v-if="user" class="relative flex items-center ml-2">
+      <div class="dropdown dropdown-end">
+        <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+          <div class="w-10 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden bg-white">
+            <img :src="user.avatar || defaultAvatar" alt="头像" />
+          </div>
+        </label>
+        <ul tabindex="0" class="dropdown-content menu menu-sm p-2 shadow-lg bg-base-100 rounded-box w-52 mt-4 z-[60]">
+          <li class="font-semibold text-center mb-1 text-gray-700">{{ user.name }}</li>
+          <li class="font-semibold text-center mb-1 text-gray-700"><router-link to="/friends">我的好友</router-link></li>
+          <li class="font-semibold text-center mb-1 text-gray-700"><a @click="logout" class="text-error">退出登录</a></li>
+        </ul>
+      </div>
+    </div>
+    <!-- 未登录显示登录按钮 -->
+    <div  v-else>
+      <router-link class="btn btn-sm btn-outline" to="/user/login">登录/注册</router-link>
     </div>
     <!-- 联系我们弹窗 -->
     <div
@@ -63,7 +81,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watchEffect, onMounted } from 'vue';
+
 const previewImg = ref('');
 const showContact = ref(false);
 
@@ -83,11 +102,41 @@ const aiInfos = [
 const engineer = {
   payWx: 'https://archive.biliimg.com/bfs/archive/6c98caa50579e4df2ce124c5c296fed953ef0a0a.jpg',
   payAli: 'https://archive.biliimg.com/bfs/archive/0978ae41412bf85354a38a67f4ae9423ff19b1e4.jpg',
-  payUrl: 'https://pay.gua.hk/'
+  payUrl: 'https://pay.gua.hk/test_wechat_pay'
 };
 
 // 复制功能
 function copy(text: string) {
   navigator.clipboard.writeText(text);
+}
+
+const user = ref(null as null | { name: string; avatar?: string });
+
+function syncUser() {
+  const u = localStorage.getItem('user');
+  user.value = u ? JSON.parse(u) : null;
+}
+const defaultAvatar = '/static/default-avatar.png';
+
+onMounted(() => {
+  const u = localStorage.getItem('user');
+  if (u) user.value = JSON.parse(u);
+  // 监听 storage 事件，捕捉到“跨 Tab 登录/登出”
+  syncUser();
+  window.addEventListener('storage', e => {
+    if (e.key === 'user' || e.key === 'token') syncUser();
+  });
+});
+watchEffect(() => {
+  // 响应本地存储变化
+  const u = localStorage.getItem('user');
+  user.value = u ? JSON.parse(u) : null;
+
+});
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  user.value = null
+  window.location.href = '/user/login';
 }
 </script>

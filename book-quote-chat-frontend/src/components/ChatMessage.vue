@@ -1,20 +1,98 @@
 <template>
   <div :class="self ? 'chat chat-end' : 'chat chat-start'">
     <div class="chat-image avatar">
-      <div class="w-10 rounded-full bg-neutral-focus text-neutral-content flex items-center justify-center shadow">
-        {{ msg.user.charAt(0).toUpperCase() }}
-      </div>
+      <template v-if="msg.avatar">
+        <img
+            :src="msg.avatar"
+            :title="`查看${msg.user}的资料`"
+            @click="$emit('showProfile', msg)"
+            class="w-10 h-10 rounded-full shadow object-cover cursor-pointer hover:scale-110 hover:ring-2 hover:ring-blue-400 transition duration-150"
+        />
+      </template>
+      <template v-else>
+        <div class="w-10 h-10 rounded-full bg-neutral-focus text-neutral-content flex items-center justify-center shadow">
+          {{ msg.user.charAt(0).toUpperCase() }}
+        </div>
+      </template>
     </div>
     <div class="chat-header flex items-center gap-2">
       <span class="font-semibold">{{ msg.user }}</span>
       <span class="text-xs opacity-50">{{ new Date(msg.created).toLocaleTimeString() }}</span>
     </div>
-    <div class="chat-bubble animate-fade-in">{{ msg.text }}</div>
+    <div class="chat-bubble animate-fade-in markdown-body" v-html="renderedText" @click="onBubbleClick"></div>
+  </div>
+  <!-- 全屏图片/视频预览蒙层 -->
+  <div
+      v-if="previewUrl"
+      class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"
+      @click="closePreview"
+      style="cursor: zoom-out;"
+  >
+    <template v-if="previewType === 'image'">
+      <img :src="previewUrl" class="max-w-full max-h-full rounded-lg shadow-2xl transition-all duration-200" />
+    </template>
+    <template v-else-if="previewType === 'video'">
+      <video
+          :src="previewUrl"
+          class="max-w-full max-h-full rounded-lg shadow-2xl"
+          controls
+          autoplay
+          style="background:#222;"
+          @click.stop
+      />
+    </template>
   </div>
 </template>
 <script setup lang="ts">
-import { defineProps } from 'vue';
-defineProps<{ msg: { user: string; text: string; created: string }, self?: boolean }>()
+import { defineProps, computed,onMounted, ref, nextTick } from 'vue';
+import { marked } from 'marked';
+const props = defineProps<{ msg: { user: string; avatar?: string; text: string; created: string; image?: string }, self?: boolean }>()
+const renderedText = computed(() => marked.parse(props.msg.text || ''))
+
+const previewUrl = ref('');
+const previewType = ref(''); // 'image' 或 'video'
+
+onMounted(() => {
+  nextTick(() => {
+    document.querySelectorAll('.markdown-body img').forEach(img => {
+      img.style.cursor = 'pointer';
+      img.onclick = () => openPreview('image', img.src);
+    });
+    document.querySelectorAll('.markdown-body video').forEach(video => {
+      video.style.cursor = 'pointer';
+      video.onclick = () => openPreview('video', video.src || (video.querySelector('source')?.src ?? ''));
+    });
+  });
+});
+
+// 打开全屏预览
+function openPreview(type: string, url: string) {
+  previewType.value = type;
+  previewUrl.value = url;
+}
+// 关闭
+function closePreview() {
+  previewUrl.value = '';
+  previewType.value = '';
+}
+
+function onBubbleClick(e) {
+  // 只处理 video 标签点击
+  if (e.target.tagName === 'VIDEO') {
+    const video = e.target;
+    // 切换播放/暂停
+    if (video.paused) {
+      video.play();
+      video.muted = true;
+    } else {
+      video.muted = !video.muted;
+      // 可选：点击播放时自动取消暂停
+      if (video.paused) video.play();
+    }
+    // 阻止冒泡
+    e.stopPropagation();
+  }
+}
 </script>
 <style>
 @keyframes fade-in {
@@ -23,5 +101,19 @@ defineProps<{ msg: { user: string; text: string; created: string }, self?: boole
 }
 .animate-fade-in {
   animation: fade-in 0.5s forwards;
+}
+.markdown-body video {
+  max-width: 80vw;
+  max-height: 80vh;
+  width: auto;
+  height: auto;
+  display: block;
+  border-radius: 10px;
+  margin: 8px 0;
+  background: #111;
+}
+.fixed[inset-0] img,
+.fixed[inset-0] video {
+  animation: fade-in 0.3s;
 }
 </style>

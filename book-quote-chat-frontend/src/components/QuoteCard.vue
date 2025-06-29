@@ -1,161 +1,133 @@
 <template>
-  <div
-      class="card bg-base-100 shadow-xl hover:shadow-2xl hover:ring-4 hover:ring-pink-200 hover:scale-105 hover:animate-wiggle transition duration-300"
-      style="min-height:140px;"
-  >
-    <div class="relative px-4 pt-4">
-      <!-- 头像浮动，文字环绕 -->
-      <img
-          :src="quote.avatar"
-          class="float-left mr-3 mb-2 w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-pink-200 object-cover shadow-lg hover:shadow-2xl"
-          :alt="quote.user"
-          loading="lazy"
-          style="shape-outside:circle(50%);"
-      />
-      <!-- 复制按钮浮动右上角 -->
-      <button
-          class="btn btn-xs btn-info absolute top-0 right-0 mt-4 mr-4 z-10"
-          :class="{ 'animate-bounce': showCopyAnim }"
-          @click="copy"
-          title="复制金句"
-      >
-        <span v-if="!showCopyAnim">📋</span>
-        <span v-else>✅</span>
-      </button>
-      <!-- 内容环绕头像 -->
-      <div>
-        <span class="text-pink-600 font-semibold text-base md:text-lg">{{ quote.user }}</span>
-        <span class="ml-2 text-xs opacity-50">{{ new Date(quote.created).toLocaleDateString() }}</span>
-        <p
-            class="italic leading-relaxed mb-1 select-text break-words transition-all duration-200 text-base md:text-lg"
-            :class="{ 'line-clamp-2': !expanded && isLong }"
-            @click="toggleExpand"
-            title="点击展开/收起"
-        >“{{ quote.text }}”</p>
-        <button
-            v-if="isLong"
-            class="btn btn-ghost btn-xs px-2 py-0 mb-1 text-xs text-blue-500 hover:underline"
-            @click="toggleExpand"
-        >
-          {{ expanded ? '收起' : '展开全文' }}
-        </button>
-        <div class="flex justify-end mb-1">
-          <span class="badge badge-outline text-xs md:text-sm">{{ quote.book }}</span>
+  <el-card class="quote-card flex flex-col gap-4 " style="height:100%;">
+    <div class="card-main flex-1 w-full">
+      <div class="flex gap-4 items-start w-full">
+        <el-avatar
+            :src="quote.avatar"
+            :alt="quote.user"
+            class="shadow"
+            @error="onImgError"
+            size="large"
+        />
+        <div class="flex-1">
+          <div class="text-base font-semibold mb-2 cursor-pointer" @click="onCopy">{{ quote.text }}</div>
+          <div class="text-xs text-gray-500 mb-1">—— {{ quote.book }}</div>
         </div>
       </div>
-      <div class="clearfix"></div>
     </div>
-    <div class="card-actions justify-between mt-2 px-4 pb-3">
-      <button
-          class="btn btn-xs transition transform hover:scale-110 active:scale-95"
-          :class="{ 'animate-bounce': bounceLike }"
-          @click="like"
-      >👍 喜欢 {{ likes }}</button>
-      <button class="btn btn-xs" @click="showComment = !showComment">💬 评论</button>
+    <div class="card-footer flex justify-between items-center w-full">
+      <el-button
+          class="btn-icon-text"
+          size="large"
+          :type="quote.liked ? 'success' : 'default'"
+          :class="{ 'like-animate': likeAnimation[quote.id], 'liked-border': quote.liked }"
+          @click.stop="handleLikeToggle"
+      >👍 喜欢 {{ likeCountDisplay }}</el-button>
+      <el-button
+          type="primary"
+          :disabled="!quote.commentable"
+          class="btn-icon-text comment-btn"
+          size="large"
+          @click.stop="onComment"
+      >💬 评论</el-button>
     </div>
-    <div v-if="showComment" class="px-4 pb-3">
-      <input v-model="comment" class="input input-sm input-bordered w-full" placeholder="写下评论..." />
-      <button class="btn btn-sm mt-1" @click="addComment">提交</button>
-      <ul class="mt-2 space-y-1">
-        <li v-for="(c, i) in comments" :key="i" class="text-sm opacity-70 transition-all duration-500 opacity-0 animate-fade-in">• {{ c }}</li>
-      </ul>
-    </div>
-  </div>
+    <el-tag v-if="copied" type="success" class="mt-2">已复制</el-tag>
+  </el-card>
 </template>
 
-<style>
-@keyframes wiggle {
-  0%, 100% { transform: rotate(-2deg); }
-  50% { transform: rotate(2deg); }
-}
-.animate-wiggle {
-  animation: wiggle 0.25s;
-}
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(10px);}
-  to { opacity: 1; transform: translateY(0);}
-}
-.animate-fade-in {
-  animation: fade-in 0.5s forwards;
-}
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* 新增浮动兼容清除 */
-.clearfix::after {
-  content: "";
-  display: table;
-  clear: both;
-}
-</style>
-
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-const props = defineProps<{ quote: { id: string; text: string; book: string; user: string; avatar: string; created: string } }>();
+import { ref, computed } from 'vue'
+const props = defineProps<{ quote: any; defaultAvatar?: string }>()
+const emit = defineEmits(['like', 'cancelLike', 'comment'])
 
-const likes = ref(Math.floor(Math.random() * 20));
-const bounceLike = ref(false);
-const showComment = ref(false);
-const comment = ref('');
-const comments = ref<string[]>([]);
+const likeAnimation = ref(false)
+const copied = ref(false)
+const localLike = ref(props.quote.liked)
+const localCount = ref(props.quote.likeCount || 0)
 
-const showCopyAnim = ref(false);
+const likeCountDisplay = computed(() => localCount.value)
 
-const expanded = ref(false);
-const isLong = computed(() => props.quote.text.length > 48);
-
-function toggleExpand() {
-  if (isLong.value) expanded.value = !expanded.value;
+function onImgError(e: Event) {
+  const img = e.target as HTMLImageElement
+  img.src = props.defaultAvatar || '/static/default-avatar.png'
 }
 
-function like() {
-  likes.value++;
-  bounceLike.value = true;
-  setTimeout(() => bounceLike.value = false, 400);
-}
-function addComment() {
-  if (comment.value.trim()) {
-    comments.value.push(comment.value.trim());
-    comment.value = '';
+// 点赞/取消本地同步 + 动画
+function handleLikeToggle() {
+  if (!localLike.value) {
+    localLike.value = true
+    localCount.value += 1
+    likeAnimation.value = true
+    emit('like', props.quote)
+    setTimeout(() => { likeAnimation.value = false }, 400)
+  } else {
+    localLike.value = false
+    localCount.value = Math.max(0, localCount.value - 1)
+    emit('cancelLike', props.quote)
   }
 }
-function copy() {
-  navigator.clipboard.writeText(`“${props.quote.text}” ——${props.quote.user}《${props.quote.book}》`);
-  showCopyAnim.value = true;
-  setTimeout(() => (showCopyAnim.value = false), 900);
+
+function onComment() {
+  emit('comment', props.quote)
+}
+
+async function onCopy() {
+  try {
+    await navigator.clipboard.writeText(props.quote.text)
+    copied.value = true
+    setTimeout(() => {
+      copied.value = false
+    }, 1500)
+  } catch (e) {}
 }
 </script>
 
-<style>
-@keyframes wiggle {
-  0%, 100% { transform: rotate(-2deg); }
-  50% { transform: rotate(2deg); }
+<style scoped>
+@keyframes bounce {
+  0% { transform: scale(1);}
+  30% { transform: scale(1.25);}
+  60% { transform: scale(0.95);}
+  100% { transform: scale(1);}
 }
-.animate-wiggle {
-  animation: wiggle 0.25s;
+.quote-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 180px; /* 确保内容再少也撑开卡片 */
 }
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(10px);}
-  to { opacity: 1; transform: translateY(0);}
+.card-main {
+  flex: 1 1 auto; /* 使内容区域弹性伸缩 */
+  min-height: 70px;
+  width: 100%;
 }
-.animate-fade-in {
-  animation: fade-in 0.5s forwards;
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 8px;
+  margin-top: auto; /* 保证按钮永远贴底部 */
+  min-height: 54px;
 }
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* 这样可彻底消除按钮下方多余空白 */
+
+.like-animate {
+  animation: bounce 0.4s;
 }
-/* 新增浮动兼容清除 */
-.clearfix::after {
-  content: "";
-  display: table;
-  clear: both;
+.btn-icon-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  padding: 8px 16px;
+  border-radius: 1px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  box-shadow: none;
+  flex: 1 1 0%;
 }
+
+
 </style>

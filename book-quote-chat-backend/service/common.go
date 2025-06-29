@@ -6,6 +6,7 @@ import (
 	"book-quote-chat-backend/wsutil"
 	"errors"
 	"github.com/google/uuid"
+	"sort"
 	"time"
 )
 
@@ -43,7 +44,7 @@ func AddComment(userId, userName, avatar, targetType, targetId, content, parentI
 }
 
 // 获取某目标下评论，支持分页
-func GetComments(targetType, targetId string, offset, limit int) ([]model.Comment, int, error) {
+func GetComments(targetType, targetId string, offset, limit int, order string) ([]model.Comment, int, error) {
 	comments, err := store.LoadComments()
 	if err != nil {
 		return nil, 0, err
@@ -54,6 +55,13 @@ func GetComments(targetType, targetId string, offset, limit int) ([]model.Commen
 			list = append(list, c)
 		}
 	}
+	// 排序
+	if order == "desc" {
+		sort.Slice(list, func(i, j int) bool { return list[i].Created > list[j].Created })
+	} else if order == "asc" {
+		sort.Slice(list, func(i, j int) bool { return list[i].Created < list[j].Created })
+	}
+	// 这样前端传 order=desc 时返回最新评论在前，order=asc 时返回最早评论在前，默认顺序不变
 	total := len(list)
 	if offset > total {
 		offset = total

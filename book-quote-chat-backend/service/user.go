@@ -63,7 +63,9 @@ func RegisterUser(name, password, email, avatar, group string) (model.User, erro
 		Status:   "normal",
 		Created:  time.Now().Unix(),
 	}
+	// 打印 user 信息
 	users = append(users, user)
+	fmt.Printf("注册用户：%v\n", users)
 	if err := store.SaveUsers(users); err != nil {
 		return model.User{}, err
 	}

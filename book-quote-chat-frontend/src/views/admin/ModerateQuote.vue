@@ -1,6 +1,10 @@
 <template>
   <div>
-    <el-page-header content="金句审核" class="mb-4">
+    <el-page-header
+        title="后台"
+        content="金句审核"
+        @back="goAdmin"
+    >
       <template #extra>
         <el-button @click="goToComment" type="primary" size="small">去评论审核</el-button>
       </template>
@@ -21,8 +25,13 @@
         <el-button @click="fetchList" type="primary">搜索</el-button>
         <el-button @click="showAdd">新增金句</el-button>
       </el-form-item>
+      <el-form-item>
+        <el-button type="success" :disabled="!multipleSelection.length" @click="handleBatchAudit('approved')">批量通过</el-button>
+        <el-button type="danger" :disabled="!multipleSelection.length" @click="handleBatchAudit('rejected')">批量驳回</el-button>
+      </el-form-item>
     </el-form>
-    <el-table :data="list" border v-loading="loading" size="small">
+    <el-table :data="list" border v-loading="loading" size="small" @selection-change="onSelectionChange">
+      <el-table-column type="selection" width="45" />
       <el-table-column prop="text" label="内容" min-width="180">
         <template #default="scope">
           <span class="text-blue-500 cursor-pointer" @click="showDetail(scope.row)">
@@ -108,6 +117,8 @@
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
+import {useRouter} from "vue-router";
+const router = useRouter()
 
 const status = ref('')
 const list = ref<any[]>([])
@@ -124,6 +135,35 @@ const current = ref<any>(null)
 
 // 标签选项（可根据实际调整或从接口获取）
 const tagOptions = ['情感', '哲理', '成长', '生活', '青春', '孤独']
+
+const multipleSelection = ref<any[]>([])
+function onSelectionChange(val: any[]) {
+  multipleSelection.value = val
+}
+function handleBatchAudit(auditStatus: 'approved' | 'rejected') {
+  if (multipleSelection.value.length === 0) return
+  ElMessageBox.prompt(
+    auditStatus === 'rejected' ? '请输入驳回理由' : `批量通过${multipleSelection.value.length}条`,
+    '批量审核',
+    {
+      inputType: auditStatus === 'rejected' ? 'textarea' : 'text',
+      showCancelButton: true,
+      inputPlaceholder: auditStatus === 'rejected' ? '请填写原因' : undefined
+    }
+  ).then(({ value }) => {
+    const ids = multipleSelection.value.map(item => item.id)
+    request.post('/api/admin/quote/audit_batch', {
+      ids,
+      status: auditStatus,
+      by: 'admin',
+      reason: value || ''
+    }).then(() => {
+      ElMessage.success('批量操作成功')
+      fetchList()
+      multipleSelection.value = []
+    })
+  }).catch(() => {})
+}
 
 function statusLabel(status: string) {
   if (status === 'approved') return '已通过'
@@ -200,9 +240,10 @@ function showDetail(row: any) {
   detailVisible.value = true
 }
 function goToComment() {
-  // 跳转到评论审核页（根据你的路由配置调整）
-  window.location.href = '/admin/moderate-comment'
+  router.push('/admin/moderate-comment')
 }
-
+function goAdmin() {
+  router.push('/admin/')
+}
 fetchList()
 </script>

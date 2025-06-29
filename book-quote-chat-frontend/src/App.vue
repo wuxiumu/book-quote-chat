@@ -1,7 +1,9 @@
 <template>
   <div>
     <NavigationBar />
-    <router-view class="p-4" />
+    <div class="p-4">
+      <router-view />
+    </div>
   </div>
 </template>
 

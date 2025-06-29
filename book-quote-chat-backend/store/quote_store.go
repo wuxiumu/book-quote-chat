@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 )
 
 var (
@@ -127,5 +128,26 @@ func DeleteQuoteByID(id string) error {
 		return errors.New("quote not found")
 	}
 	quotes = append(quotes[:idx], quotes[idx+1:]...)
+	return SaveQuotes(quotes)
+}
+
+// BatchAuditQuote
+func BatchAuditQuote(ids []string, status, by, reason string) error {
+	quotes, err := LoadQuotes()
+	if err != nil {
+		return err
+	}
+	idSet := map[string]struct{}{}
+	for _, id := range ids {
+		idSet[id] = struct{}{}
+	}
+	for i := range quotes {
+		if _, ok := idSet[quotes[i].ID]; ok {
+			quotes[i].Status = status
+			quotes[i].AuditBy = by
+			quotes[i].AuditTime = time.Now().Unix()
+			quotes[i].RejectReason = reason
+		}
+	}
 	return SaveQuotes(quotes)
 }

@@ -5,6 +5,7 @@ import (
 	"book-quote-chat-backend/store"
 	"errors"
 	"github.com/google/uuid"
+	"strings"
 	"time"
 )
 
@@ -23,6 +24,35 @@ func ListComments(offset, limit int) ([]model.Comment, int, error) {
 		end = total
 	}
 	return all[offset:end], total, nil
+}
+
+// 查询待审核评论（支持分页/过滤）
+func ListCommentsForAudit(offset, limit int, keyword, status string) ([]model.Comment, int, error) {
+	list, err := store.LoadComments()
+	if err != nil {
+		return nil, 0, err
+	}
+	var filtered []model.Comment
+	for _, c := range list {
+		if status != "" && c.Status != status {
+			continue
+		}
+		if keyword != "" && !strings.Contains(c.Content, keyword) &&
+			!strings.Contains(c.UserName, keyword) {
+			continue
+		}
+		filtered = append(filtered, c)
+	}
+	total := len(filtered)
+	start := offset
+	end := offset + limit
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
+	return filtered[start:end], total, nil
 }
 
 // 审核评论（通过/驳回/删除）

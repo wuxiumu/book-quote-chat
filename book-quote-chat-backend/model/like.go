@@ -7,3 +7,9 @@ type Like struct {
 	TargetType string `json:"targetType"` // "quote", "msg", "chat", etc.
 	Created    int64  `json:"created"`
 }
+
+// Like 仅做数据存储，LikeView 用于接口返回，便于返回“是否点赞”状态。
+type LikeView struct {
+	Like
+	Liked bool `json:"liked"`
+}

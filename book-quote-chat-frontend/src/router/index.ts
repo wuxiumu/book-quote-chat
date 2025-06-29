@@ -9,6 +9,11 @@ import ChatRoom from '@/views/ChatRoom.vue';
 
 const routes = [
     { path: '/', name: 'Home', component: Home },
+    {
+        path: '/user/login',
+        component: () => import('@/views/user/LoginRegister.vue'),
+        meta: { title: '用户登录' }
+    },
     { path: '/quotes', name: 'Quotes', component: Quotes },
     { path: '/chat', name: 'Chat', component: Chat },
     { path: '/friends', name: 'Friends', component: Friends },

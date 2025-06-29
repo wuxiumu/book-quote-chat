@@ -13,35 +13,89 @@ import (
 )
 
 // 评论列表
+// GET /api/admin/comments?offset=0&limit=20&keyword=&status=
 func HandleAdminListComments(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	if limit == 0 {
-		limit = 20
-	}
-	list, total, err := service.ListComments(offset, limit)
+	keyword := r.URL.Query().Get("keyword")
+	status := r.URL.Query().Get("status")
+	list, total, err := service.ListCommentsForAudit(offset, limit, keyword, status)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	resp := map[string]interface{}{"list": list, "total": total}
-	_ = json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"list":  list,
+		"total": total,
+	})
 }
 
 // 审核评论
+// POST /api/admin/comment/audit
 func HandleAdminAuditComment(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		AdminID   string `json:"adminId"`
-		CommentID string `json:"commentId"`
-		Action    string `json:"action"` // "delete"...
-		Detail    string `json:"detail"`
+		ID     string `json:"id"`
+		Status string `json:"status"`
+		By     string `json:"by"`
+		Reason string `json:"reason"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "参数错误", 400)
 		return
 	}
-	if err := service.AuditComment(req.AdminID, req.CommentID, req.Action, req.Detail); err != nil {
-		http.Error(w, err.Error(), 400)
+	if req.ID == "" || (req.Status != "approved" && req.Status != "rejected") {
+		http.Error(w, "参数错误", 400)
+		return
+	}
+	if err := store.AuditComment(model.Comment{
+		ID:           req.ID,
+		Status:       req.Status,
+		AuditBy:      req.By,
+		AuditTime:    time.Now().Unix(),
+		RejectReason: req.Reason,
+	}); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+}
+
+// POST /api/admin/comment/delete
+func HandleAdminDeleteComment(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "参数错误", 400)
+		return
+	}
+	if req.ID == "" {
+		http.Error(w, "ID必填", 400)
+		return
+	}
+	if err := store.DeleteCommentByID(req.ID); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+}
+
+// POST /api/admin/comment/audit_batch
+// 入参: { ids: ["id1","id2"], status: "approved"/"rejected", by: "admin", reason: "" }
+func HandleAdminBatchAuditComment(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		IDs    []string `json:"ids"`
+		Status string   `json:"status"`
+		By     string   `json:"by"`
+		Reason string   `json:"reason"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(req.IDs) == 0 ||
+		(req.Status != "approved" && req.Status != "rejected") {
+		http.Error(w, "参数错误", 400)
+		return
+	}
+	if err := store.BatchAuditComment(req.IDs, req.Status, req.By, req.Reason); err != nil {
+		http.Error(w, err.Error(), 500)
 		return
 	}
 	_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
@@ -268,7 +322,7 @@ func HandleAdminAuditQuote(w http.ResponseWriter, r *http.Request) {
 	}
 	// 打印 req
 	fmt.Println(req)
- 
+
 	if err := store.AuditQuote(model.Quote{
 		ID:           req.ID,
 		Status:       req.Status,
@@ -276,6 +330,26 @@ func HandleAdminAuditQuote(w http.ResponseWriter, r *http.Request) {
 		AuditTime:    time.Now().Unix(),
 		RejectReason: req.Reason,
 	}); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+}
+
+// 批量审核金句
+func HandleAdminBatchAuditQuote(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		IDs    []string `json:"ids"`
+		Status string   `json:"status"`
+		By     string   `json:"by"`
+		Reason string   `json:"reason"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(req.IDs) == 0 ||
+		(req.Status != "approved" && req.Status != "rejected") {
+		http.Error(w, "参数错误", 400)
+		return
+	}
+	if err := store.BatchAuditQuote(req.IDs, req.Status, req.By, req.Reason); err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}

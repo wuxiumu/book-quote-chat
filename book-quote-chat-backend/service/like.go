@@ -16,20 +16,25 @@ var (
 	ipLikeHistory   = make(map[string]int64) // key: ip+targetType+targetId, value: last like unix
 	ipLikeHistoryMu sync.Mutex
 	rateLimitWindow int64 = 60 // 秒
+	likeRateLimiter store.LikeRateLimiter
 )
 
 func AddLike(userId, targetType, targetId string) (model.Like, error) {
+	fmt.Println("AddLike called with userId:", userId, "targetType:", targetType, "targetId:", targetId)
 	// 并发安全：加锁保证原子性
 	addLikeMu.Lock()         // 加锁
 	defer addLikeMu.Unlock() // 解锁
 
 	likes, err := store.LoadLikes("", "")
 	if err != nil {
+		fmt.Println("Error loading likes:", err)
 		return model.Like{}, err
 	}
+	fmt.Println("Current likes count:", len(likes))
 	// 检查是否已点赞（幂等）
 	for _, l := range likes {
 		if l.UserID == userId && l.TargetType == targetType && l.TargetID == targetId {
+			fmt.Println("Already liked found:", l)
 			return l, nil // 已点直接返回
 		}
 	}
@@ -40,8 +45,10 @@ func AddLike(userId, targetType, targetId string) (model.Like, error) {
 		TargetID:   targetId,
 		Created:    time.Now().Unix(),
 	}
+	fmt.Println("New like created:", like)
 	likes = append(likes, like)
 	err = store.SaveLikes(likes)
+	fmt.Println("SaveLikes error:", err)
 	return like, err
 }
 
@@ -154,25 +161,19 @@ func AddLikeWithCheck(userId, targetType, targetId string) (model.Like, error) {
 
 // 集成点赞：IP限流+目标校验+并发锁
 func AddLikeWithIPAndCheck(userId, targetType, targetId, ip string) (model.Like, error) {
-	// 校验目标
-	switch targetType {
-	case "quote":
-		if !ExistsQuote(targetId) {
-			return model.Like{}, fmt.Errorf("点赞目标不存在")
-		}
+	// 检查目标是否存在
+	if targetType == "quote" && !ExistsQuote(targetId) {
+		return model.Like{}, fmt.Errorf("点赞目标不存在")
 	}
-	// 防刷
-	key := fmt.Sprintf("%s_%s_%s", ip, targetType, targetId)
-	ipLikeHistoryMu.Lock()
-	defer ipLikeHistoryMu.Unlock()
-	now := time.Now().Unix()
-	if last, ok := ipLikeHistory[key]; ok && now-last < rateLimitWindow {
-		return model.Like{}, fmt.Errorf("点赞过于频繁，请稍后再试")
-	}
-	ipLikeHistory[key] = now
-	// 并发锁
-	addLikeMu.Lock()
-	defer addLikeMu.Unlock()
+	// IP限流
+	//if !RateLimiters.Like.Allow(ip, targetType, targetId) {
+	//	return model.Like{}, fmt.Errorf("点赞过于频繁，请稍后再试")
+	//}
+	//RateLimiters.Like.Record(ip, targetType, targetId)
+
+	// 并发锁、写入点赞
+	//addLikeMu.Lock()
+	//defer addLikeMu.Unlock()
 	return AddLike(userId, targetType, targetId)
 }
 
@@ -200,4 +201,35 @@ func GetTargetOwnerId(targetType, targetId string) string {
 		return "u_owner" // mock
 	}
 	return ""
+}
+
+// GetLikedTargetIDsByUser 查询某用户点赞过的目标ID map，可选 targetType 过滤
+// 返回 map[targetId]count，一般只需要 key 判断是否已点赞
+// 高性能 map 方案用于接口批量判断“是否点赞”，如前端批量展示点赞状态。
+func GetLikedTargetIDsByUser(userId string, targetType string) (map[string]int, error) {
+	likes, err := store.LoadLikes("", "")
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[string]int)
+	for _, l := range likes {
+		if l.UserID == userId && (targetType == "" || l.TargetType == targetType) {
+			m[l.TargetID]++
+		}
+	}
+	return m, nil
+}
+
+// GetLikedTargetIDListByUser 查询某用户点赞过的所有目标ID列表，可选 targetType 过滤
+// 高性能 map 方案用于接口批量判断“是否点赞”，如前端批量展示点赞状态。
+func GetLikedTargetIDListByUser(userId string, targetType string) ([]string, error) {
+	m, err := GetLikedTargetIDsByUser(userId, targetType)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]string, 0, len(m))
+	for id := range m {
+		ids = append(ids, id)
+	}
+	return ids, nil
 }

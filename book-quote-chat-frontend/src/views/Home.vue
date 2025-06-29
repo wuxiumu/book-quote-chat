@@ -2,17 +2,25 @@
   <div class="flex flex-col min-h-[80vh]">
     <!-- 顶部欢迎 -->
     <div class="text-center mt-10 flex-1">
-      <h1 class="text-4xl font-extrabold mb-4">欢迎来到 QuoteChat ✨</h1>
+      <h1 class="text-4xl font-extrabold mb-4">
+        <template v-if="user">
+          欢迎回来，{{ user.name }}！✨
+        </template>
+        <template v-else>
+          欢迎来到 QuoteChat ✨
+        </template>
+      </h1>
       <p class="text-lg opacity-80">分享书中金句，结识志同道合的朋友。</p>
 
       <!-- 随机金句 -->
       <transition name="fade-move" mode="out-in">
-        <div key="random-quote" class="my-10 mx-auto max-w-xl flex flex-col items-center">
+        <div v-if="randomQuote" key="random-quote" class="my-10 mx-auto max-w-xl flex flex-col items-center">
           <div class="text-xl italic font-semibold text-pink-700 animate-bounce-in">
-            “{{ randomQuote.text }}”
+            {{ randomQuote.text }}
           </div>
           <div class="mt-1 text-sm text-gray-500">—— {{ randomQuote.book || '佚名' }}</div>
         </div>
+        <div v-else key="loading" class="my-10 text-gray-400 text-base">正在加载金句...</div>
       </transition>
       <button class="btn btn-sm btn-outline mb-2" @click="nextQuote">换一句</button>
 
@@ -46,53 +54,90 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import request from '@/api/request'
+const user = ref<{name: string} | null>(null);
+onMounted(() => {
+  try {
+    const saved = localStorage.getItem('user');
+    if (saved) user.value = JSON.parse(saved);
+  } catch {}
+});
 
-// 随机金句池
-const quotes = [
-  { text: "人生没有白走的路，每一步都算数。", book: "活着" },
-  { text: "最怕你一生碌碌无为，还安慰自己平凡可贵。", book: "情感语录" },
-  { text: "喜欢是乍见之欢，爱是久处不厌。", book: "情感语录" },
-  { text: "你不主动，我们就真的没关系了。", book: "情感语录" },
-  { text: "时间会告诉你，越是平淡越长久。", book: "情感语录" },
-  { text: "谢谢你的绝情，让我学会死心。", book: "情感语录" },
-  { text: "代码是桥梁，AI是未来。", book: "Aric 语录" },
-  // ...可以继续补充
-];
+// 新版——请求后端接口获取10条金句
 
-const randomQuote = ref(quotes[Math.floor(Math.random() * quotes.length)]);
+const randomQuotes = ref<{text:string,book:string}[]>([]);
+const randomQuote = ref<{text:string,book:string}|null>(null);
+
+async function fetchQuotes() {
+  request.get('/api/quotes/random?limit=10').then(res => {
+    randomQuotes.value =  res.data;
+    if (randomQuotes.value.length) {
+        randomQuote.value = randomQuotes.value[Math.floor(Math.random() * randomQuotes.value.length)];
+    }
+  })
+}
 function nextQuote() {
+  if (!randomQuotes.value.length) return;
   let idx;
   do {
-    idx = Math.floor(Math.random() * quotes.length);
-  } while (quotes[idx] === randomQuote.value);
-  randomQuote.value = quotes[idx];
+    idx = Math.floor(Math.random() * randomQuotes.value.length);
+  } while (randomQuotes.value[idx] === randomQuote.value && randomQuotes.value.length > 1);
+  randomQuote.value = randomQuotes.value[idx];
 }
+
+
 
 // 掌声互动
 const clapCount = ref(0);
 const showEffect = ref(false);
-function clap() {
-  clapCount.value++;
-  showEffect.value = true;
-  setTimeout(() => (showEffect.value = false), 700);
+const clapped = ref(false);
+
+async function fetchClapCount() {
+  try {
+    const res = await request.get('/api/clap/count');
+    clapCount.value = res.data.count || 0;
+  } catch {
+    clapCount.value = 0;
+  }
+}
+onMounted(() => {
+  fetchQuotes();
+  fetchLinks();
+  fetchClapCount();
+});
+
+async function clap() {
+  if (clapped.value) {
+    clapCount.value += 1;
+    return;
+  }
+  try {
+    const res = await request.post('/api/clap');
+    if (res.data && res.data.success) {
+      clapCount.value = res.data.count;
+      clapped.value = true;
+      showEffect.value = true;
+      setTimeout(() => (showEffect.value = false), 700);
+    } else {
+      clapCount.value += 1;
+    }
+  } catch (e) {
+    clapCount.value += 1;
+  }
 }
 
 // 友情链接
 const links = ref<{name: string; url: string}[]>([]);
-onMounted(async () => {
-  // 实际可改为你的后端 API
-  try {
-    const res = await fetch('/api/friend-links');
-    links.value = await res.json();
-  } catch {
-    // mock数据
-    links.value = [
-      { name: '极客时间', url: 'https://time.geekbang.org' },
-      { name: '掘金', url: 'https://juejin.cn' },
-      { name: '知乎', url: 'https://zhihu.com' },
-    ];
-  }
+onMounted(() => {
+  fetchQuotes();
+  fetchLinks();
 });
+
+async function fetchLinks() {
+  request.get('/api/friend-links').then(res => {
+    links.value =  res.data;
+  })
+}
 </script>
 
 <style scoped>

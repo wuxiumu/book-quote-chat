@@ -5,13 +5,13 @@
         <img
             :src="msg.avatar"
             :title="`查看${msg.user}的资料`"
-            @click="$emit('showProfile', msg)"
+            @click="$emit('showProfile', { ...msg, self })"
             class="w-10 h-10 rounded-full shadow object-cover cursor-pointer hover:scale-110 hover:ring-2 hover:ring-blue-400 transition duration-150"
         />
       </template>
       <template v-else>
         <div class="w-10 h-10 rounded-full bg-neutral-focus text-neutral-content flex items-center justify-center shadow">
-          {{ msg.user.charAt(0).toUpperCase() }}
+          {{ (msg.nickname || msg.user || msg.userid || '系统').charAt(0).toUpperCase() }}
         </div>
       </template>
     </div>

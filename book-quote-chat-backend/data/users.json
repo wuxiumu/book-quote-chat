@@ -78,5 +78,15 @@
     "status": "normal",
     "group": "user",
     "created": 1751173455
+  },
+  {
+    "id": "b0755012-e3be-4f46-9e38-ed2fa102be63",
+    "name": "admin888",
+    "password": "$2a$10$mwLHsVQw0UYTYWPFsszxZeqDdO7r9GtmWvPY8x9KwEgyZwaUbR7CS",
+    "avatar": "https://randomuser.me/api/portraits/women/44.jpg",
+    "email": "wuxiuadmin888mu@163.com",
+    "status": "normal",
+    "group": "user",
+    "created": 1751197337
   }
 ]

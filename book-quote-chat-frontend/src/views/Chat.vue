@@ -14,7 +14,7 @@
           v-for="m in messages"
           :key="m.id"
           :msg="m"
-          :self="m.user === myName"
+          :self="m.userid === myId"
           @showProfile="openProfile"
       />
       </transition-group>
@@ -102,6 +102,7 @@ const loginDialog = ref(false)
 interface Msg {
   id: string;
   user: string;
+  userid: string;
   type?: string;
   avatar: string;
   text: string;
@@ -111,11 +112,12 @@ interface Msg {
 
 const user = ref<{ name: string; avatar: string } | null>(null)
 const myName = computed(() => user.value?.name || '游客');
+const myId = computed(() => user.value?.userid || '');
 function loadUser() {
   try {
     const u = JSON.parse(localStorage.getItem('user') || 'null')
     if (u && u.name && u.avatar) {
-      user.value = { name: u.name, avatar: u.avatar }
+      user.value = { name: u.name, avatar: u.avatar, userid: u.id }
     } else {
       user.value = null
     }
@@ -229,6 +231,7 @@ function send() {
       id: (Date.now() + Math.random()).toString(),
       type: 'chat',
       user: user.value?.name || '游客',
+      userid: user.value?.userid || '', // 关键修正！
       avatar: user.value?.avatar || '/static/default-avatar.png',
       text: input.value,
       created: new Date().toISOString()

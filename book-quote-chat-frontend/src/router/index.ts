@@ -5,7 +5,7 @@ import Quotes from '@/views/Quotes.vue';
 import Chat from '@/views/Chat.vue';
 import Friends from '@/views/Friends.vue';
 import ChatRoom from '@/views/ChatRoom.vue';
-
+import ChatPrivateRoom from '@/views/ChatPrivateRoom.vue';
 
 const routes = [
     { path: '/', name: 'Home', component: Home },
@@ -16,6 +16,11 @@ const routes = [
     },
     { path: '/quotes', name: 'Quotes', component: Quotes },
     { path: '/chat', name: 'Chat', component: Chat },
+    {
+        path: '/chat/private/:id',
+        name: 'PrivateChatRoom',
+        component: ChatPrivateRoom,
+    },
     { path: '/friends', name: 'Friends', component: Friends },
     {
         path: '/chat/:id',

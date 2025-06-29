@@ -167,5 +167,6 @@ func main() {
 	registerProtectedAPI("/api/admin/stat_overview", api.HandleAdminStatOverview)            // 数据统
 	registerProtectedAPI("/api/admin/stat_audit_overview", api.HandleAdminAuditStatOverview) // 数据统
 
-	http.ListenAndServe(":8080", nil)
+	//http.ListenAndServe(":8080", nil)
+	http.ListenAndServe("0.0.0.0:8080", nil)
 }

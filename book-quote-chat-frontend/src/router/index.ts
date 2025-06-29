@@ -21,6 +21,16 @@ const routes = [
         name: 'PrivateChatRoom',
         component: ChatPrivateRoom,
     },
+    {
+        path: '/agora-chat',
+        name: 'AgoraChat',
+        component: () => import('@/views/AgoraChat.vue')
+    },
+    {
+        path: '/agora-chats',
+        name: 'AgoraMultiChat',
+        component: () => import('@/views/AgoraMultiChat.vue')
+    },
     { path: '/friends', name: 'Friends', component: Friends },
     {
         path: '/chat/:id',

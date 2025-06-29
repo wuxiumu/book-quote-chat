@@ -13,6 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "agora-rtc-sdk-ng": "4.23.4",
     "axios": "1.10.0",
     "echarts": "5.6.0",
     "element-plus": "2.10.2",

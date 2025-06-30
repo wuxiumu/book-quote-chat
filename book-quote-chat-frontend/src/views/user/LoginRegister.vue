@@ -55,9 +55,9 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
-import { useRouter } from 'vue-router'
 
-const router = useRouter()
+
+
 const tab = ref('login')
 const loading = ref(false)
 
@@ -121,7 +121,7 @@ async function onRegister() {
     return
   }
   try {
-    const res = await request.post('/api/register', {
+    await request.post('/api/register', {
       name: registerForm.value.name,
       password: registerForm.value.password,
       email: registerForm.value.email,

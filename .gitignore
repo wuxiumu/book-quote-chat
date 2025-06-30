@@ -1,2 +1,5 @@
 ./idea/
 ./book-quote-chat-backend/uploads/
+./book-quote-chat-backend/.env
+./book-quote-chat-frontend/.env
+./tmp/

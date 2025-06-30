@@ -26,34 +26,32 @@
 
 <script setup lang="ts">
 import { message } from '@/utils/message'
-
+// 必须要有 defineProps，TS 才知道 user/myUser 是 props
 const props = defineProps<{ user: any; myUser?: any }>();
 const emit = defineEmits(['close']);
-const myUser = JSON.parse(localStorage.getItem('user') || '{}')
+// const myUser = JSON.parse(localStorage.getItem('user') || '{}')
 
-function copyId(id) {
-  navigator.clipboard.writeText(id)
-    .then(() => {
-      message.success('已复制ID')
-    });
+function copyId(id: string | number) {
+  navigator.clipboard.writeText(String(id))
+      .then(() => {
+        message.success('已复制ID')
+      });
 }
-function handleAddFriend(user) {
-  console.log("myUser",myUser)
-  console.log("user",user)
-  if (myUser && user.userid === myUser.id) {
+function handleAddFriend(user: any) {
+  if (props.myUser && user.userid === props.myUser.id) {
     message.info('不能加自己为好友')
     return;
   }
   message.success(`已向 ${user.user || user.name} 发起好友申请！`)
 }
-function handlePrivateChat(user) {
-  if (myUser && user.userid === myUser.id) {
+function handlePrivateChat(user: any) {
+  if (props.myUser && user.userid === props.myUser.id) {
     message.info('不能和自己私聊')
     return;
   }
-  window.location.href = `/chat/private/`+genSessionKey(user.userid, myUser.id);
+  window.location.href = `/chat/private/` + genSessionKey(user.userid, props.myUser.id);
 }
-function genSessionKey(id1, id2) {
+function genSessionKey(id1: string | number, id2: string | number) {
   // 保证 key 顺序唯一，小的在前
   return [id1, id2].sort().join('_')
 }

@@ -7,6 +7,7 @@
       <ul class="menu menu-horizontal px-1">
         <li><router-link to="/quotes">金句</router-link></li>
         <li><router-link to="/chat">群聊</router-link></li>
+        <li><router-link to="/agora-chats">视频</router-link></li>
       </ul>
     </div>
 

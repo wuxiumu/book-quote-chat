@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import request from '@/api/request'
-import { ref, onMounted, nextTick, watch } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import QuoteCard from '@/components/QuoteCard.vue';
 import LoginDialog from '@/components/LoginDialog.vue';
 import CommentDialog from '@/components/CommentDialog.vue';
@@ -43,6 +43,7 @@ interface Quote {
   liked?: boolean;
   commentable?: boolean;
   likeAnimating?: boolean;
+  likeCount?: number;    // ← 补充这一行！
 }
 
 const defaultAvatar = '/static/default-avatar.png'; // 你项目的默认头像路径
@@ -220,7 +221,7 @@ function onLoginSuccess(userInfo: any) {
   user.value = userInfo
   showLogin.value = false
 }
-function onCommentSubmit({ quoteId, content }: { quoteId: string, content: string }) {
+function onCommentSubmit(_: any) {
   // 可以添加评论成功后的刷新逻辑
   showComment.value = false
 }

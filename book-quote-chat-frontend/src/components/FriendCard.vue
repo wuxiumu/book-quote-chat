@@ -8,7 +8,7 @@
       />
       <span
         class="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white"
-        :class="online ? 'bg-green-500' : 'bg-gray-400'"
+        :class="friend.online ? 'bg-green-500' : 'bg-gray-400'"
         title="Online status"
       ></span>
     </div>
@@ -30,7 +30,7 @@
     </div>
     <div class="mt-2 w-full px-2">
       <label class="block text-xs text-gray-500 mb-1">分组</label>
-      <div class="text-sm text-gray-700 truncate" :title="group">{{ group || '未分组' }}</div>
+      <div class="text-sm text-gray-700 truncate" :title="friend.group">{{ friend.group || '未分组' }}</div>
     </div>
   </div>
 </template>
@@ -41,29 +41,31 @@ interface Friend {
   id: string;
   name: string;
   avatar: string;
-}
-
-const props = defineProps<{
-  friend: Friend;
-  online: boolean;
-  remark: string;
   group: string;
-}>();
+  remark?: string; // 可选
+  online: boolean;
+}
+const props = defineProps<{
+  friend: Friend
+  onChat?: (friend: Friend) => any
+  "onUpdate-remark"?: (payload: { id: string; remark: string }) => any
+}>()
 
 const emit = defineEmits<{
   (e: 'chat', friend: Friend): void;
   (e: 'update-remark', payload: { id: string; remark: string }): void;
 }>();
 
-const editableRemark = ref(props.remark);
+const editableRemark = ref(props.friend.remark ?? '');
 
-watch(() => props.remark, (newRemark) => {
-  editableRemark.value = newRemark;
+
+watch(() => props.friend.remark, (newRemark) => {
+  editableRemark.value = newRemark ?? '';
 });
 
 function saveRemark() {
   const trimmed = editableRemark.value.trim();
-  if (trimmed !== props.remark) {
+  if (trimmed !== (props.friend.remark ?? '')) {
     emit('update-remark', { id: props.friend.id, remark: trimmed });
   }
   editableRemark.value = trimmed;

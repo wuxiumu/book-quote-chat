@@ -6,7 +6,15 @@
     </div>
     <div v-if="friends.length === 0" class="text-center opacity-60 py-12">还没有好友，快去添加一个吧！</div>
     <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-      <FriendCard v-for="f in friends" :key="f.id" :friend="f" @chat="chatTo" />
+      <FriendCard
+          v-for="f in friends"
+          :key="f.id"
+          :friend="f"
+          :online="false"
+          :remark="''"
+          :group="''"
+          @chat="chatTo"
+      />
     </div>
 
     <!-- 添加好友弹窗 -->
@@ -29,11 +37,19 @@ const router = useRouter();
 import FriendCard from '@/components/FriendCard.vue';
 
 
-interface Friend { id: string; name: string; avatar: string }
+interface Friend {
+  id: string;
+  name: string;
+  avatar: string;
+  group: string;
+  remark?: string; // 可选
+  online: boolean;
+}
+
 const friends = ref<Friend[]>([
-  { id: 'f1', name: '书友A', avatar: 'https://api.dicebear.com/7.x/miniavs/svg?seed=A' },
-  { id: 'f2', name: '书友B', avatar: 'https://api.dicebear.com/7.x/miniavs/svg?seed=B' },
-  { id: 'f3', name: '书友C', avatar: 'https://api.dicebear.com/7.x/miniavs/svg?seed=C' },
+  { id: 'f1', name: '书友A', avatar: 'https://api.dicebear.com/7.x/miniavs/svg?seed=A', group: '', remark: '', online: false },
+  { id: 'f2', name: '书友B', avatar: 'https://api.dicebear.com/7.x/miniavs/svg?seed=B', group: '', remark: '', online: false },
+  { id: 'f3', name: '书友C', avatar: 'https://api.dicebear.com/7.x/miniavs/svg?seed=C', group: '', remark: '', online: false },
 ]);
 const showAdd = ref(false);
 const newFriend = ref('');
@@ -49,7 +65,10 @@ function addFriend() {
   friends.value.push({
     id: Date.now() + '',
     name,
-    avatar: `https://api.dicebear.com/7.x/miniavs/svg?seed=${encodeURIComponent(name)}`
+    avatar: `https://api.dicebear.com/7.x/miniavs/svg?seed=${encodeURIComponent(name)}`,
+    group: '',
+    remark: '',
+    online: false,
   });
   newFriend.value = '';
   error.value = '';

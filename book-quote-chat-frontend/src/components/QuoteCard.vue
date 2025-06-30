@@ -40,7 +40,7 @@ import { ref, computed } from 'vue'
 const props = defineProps<{ quote: any; defaultAvatar?: string }>()
 const emit = defineEmits(['like', 'cancelLike', 'comment'])
 
-const likeAnimation = ref(false)
+const likeAnimation = ref<Record<string | number, boolean>>({})
 const copied = ref(false)
 const localLike = ref(props.quote.liked)
 const localCount = ref(props.quote.likeCount || 0)
@@ -54,12 +54,13 @@ function onImgError(e: Event) {
 
 // 点赞/取消本地同步 + 动画
 function handleLikeToggle() {
+  const id = props.quote.id
   if (!localLike.value) {
     localLike.value = true
     localCount.value += 1
-    likeAnimation.value = true
+    likeAnimation.value[id] = true
     emit('like', props.quote)
-    setTimeout(() => { likeAnimation.value = false }, 400)
+    setTimeout(() => { likeAnimation.value[id] = false }, 400)
   } else {
     localLike.value = false
     localCount.value = Math.max(0, localCount.value - 1)

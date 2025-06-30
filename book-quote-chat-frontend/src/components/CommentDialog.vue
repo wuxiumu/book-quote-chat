@@ -38,12 +38,23 @@ const props = defineProps(['modelValue', 'quote'])
 const emit = defineEmits(['update:modelValue', 'submit'])
 const visible = ref(false)
 const content = ref('')
-const commentList = ref([])
 const loading = ref(false)
 const page = ref(1)
 const hasMore = ref(true)
 const PAGE_SIZE = 10
 const commentBox = ref()
+
+interface Comment {
+  id: number;
+  user?: {
+    avatar?: string;
+    nickname?: string;
+  };
+  content: string;
+  created: number;
+}
+
+const commentList = ref<Comment[]>([])
 
 async function loadComments(id: number, append = false) {
   if (!hasMore.value && append) return

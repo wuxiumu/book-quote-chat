@@ -80,15 +80,8 @@
 const uploadAccept = import.meta.env.VITE_UPLOAD_ACCEPT || 'jpg,jpeg,png,gif,webp,bmp,mp4,webm,ogg';
 const acceptStr = uploadAccept
   .split(',')
-  .map(ext => '.' + ext.trim())
+    .map((ext: string) => '.' + ext.trim())
   .join(',');
-// 获取图片完整 URL
-function getImageUrl(url: string) {
-  if (!url) return '';
-  if (/^https?:\/\//.test(url)) return url;
-  const base = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '';
-  return base + (url.startsWith('/') ? url : '/' + url);
-}
 import { ref, onMounted, nextTick, computed,watch } from 'vue';
 import request from '@/api/request'
 import ChatMessage from '@/components/ChatMessage.vue';
@@ -109,8 +102,15 @@ interface Msg {
   created: string;
   image?: string;
 }
+// 定义 User 类型
+interface User {
+  name: string;
+  avatar: string;
+  userid: string; // 这里必须是 userid，和服务端字段保持一致
+}
+// const user = ref<{ name: string; avatar: string } | null>(null)
+const user = ref<User | null>(null)
 
-const user = ref<{ name: string; avatar: string } | null>(null)
 const myName = computed(() => user.value?.name || '游客');
 const myId = computed(() => user.value?.userid || '');
 function loadUser() {
@@ -136,23 +136,25 @@ const scrollArea = ref<HTMLElement | null>(null);
 const onlineCount = ref(0);
 
 const showProfile = ref(false)
-const profileUser = ref(null)
-function openProfile(user) {
+const profileUser = ref<User | null>(null)
+function openProfile(user: User) {
   profileUser.value = user
   showProfile.value = true
 }
 
 const showEmoji = ref(false)
-function addEmoji(emoji) {
+function addEmoji(emoji: any) {
   input.value += emoji.i
   showEmoji.value = false
 }
-function handleFileChange(e) {
-  const file = e.target.files[0]
-  if (file) sendImage(file)
+function handleFileChange(e: Event) {
+  const target = e.target as HTMLInputElement | null
+  if (target && target.files && target.files[0]) {
+    const file = target.files[0]
+    if (file) sendImage(file)
+  }
 }
-
-async function sendImage(file) {
+async function sendImage(file: File) {
   const url = await uploadFile(file);
   if (!url) return;
 
@@ -265,7 +267,7 @@ watch(
 
 // 新增文件上传方法
 // 新增文件上传方法（用 request 适配你的 API 工具）
-async function uploadFile(file) {
+async function uploadFile(file: File) {
   const form = new FormData();
   form.append('file', file);
   try {

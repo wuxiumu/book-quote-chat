@@ -1,25 +1,20 @@
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router';
-import Home from '@/views/Home.vue';
-import Quotes from '@/views/Quotes.vue';
-import Chat from '@/views/Chat.vue';
-import Friends from '@/views/Friends.vue';
-import ChatRoom from '@/views/ChatRoom.vue';
-import ChatPrivateRoom from '@/views/ChatPrivateRoom.vue';
 
+// 路由配置
 const routes = [
-    { path: '/', name: 'Home', component: Home },
+    { path: '/', name: 'Home', component: () => import('@/views/Home.vue') },
     {
         path: '/user/login',
         component: () => import('@/views/user/LoginRegister.vue'),
         meta: { title: '用户登录' }
     },
-    { path: '/quotes', name: 'Quotes', component: Quotes },
-    { path: '/chat', name: 'Chat', component: Chat },
+    { path: '/quotes', name: 'Quotes', component: () => import('@/views/Quotes.vue') },
+    { path: '/chat', name: 'Chat', component: () => import('@/views/Chat.vue') },
     {
         path: '/chat/private/:id',
         name: 'PrivateChatRoom',
-        component: ChatPrivateRoom,
+        component: () => import('@/views/ChatPrivateRoom.vue'),
     },
     {
         path: '/agora-chat',
@@ -31,11 +26,11 @@ const routes = [
         name: 'AgoraMultiChat',
         component: () => import('@/views/AgoraMultiChat.vue')
     },
-    { path: '/friends', name: 'Friends', component: Friends },
+    { path: '/friends', name: 'Friends', component: () => import('@/views/Friends.vue') },
     {
         path: '/chat/:id',
         name: 'ChatRoom',
-        component: ChatRoom,
+        component: () => import('@/views/ChatRoom.vue'),
     },
     {
         path: '/admin',

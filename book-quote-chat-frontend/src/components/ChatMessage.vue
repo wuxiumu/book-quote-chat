@@ -11,7 +11,7 @@
       </template>
       <template v-else>
         <div class="w-10 h-10 rounded-full bg-neutral-focus text-neutral-content flex items-center justify-center shadow">
-          {{ (msg.nickname || msg.user || msg.userid || '系统').charAt(0).toUpperCase() }}
+          {{ ( msg.user || '系统').charAt(0).toUpperCase() }}
         </div>
       </template>
     </div>
@@ -55,12 +55,14 @@ const previewType = ref(''); // 'image' 或 'video'
 onMounted(() => {
   nextTick(() => {
     document.querySelectorAll('.markdown-body img').forEach(img => {
-      img.style.cursor = 'pointer';
-      img.onclick = () => openPreview('image', img.src);
+      const image = img as HTMLImageElement
+      image.style.cursor = 'pointer';
+      image.onclick = () => openPreview('image', image.src);
     });
     document.querySelectorAll('.markdown-body video').forEach(video => {
-      video.style.cursor = 'pointer';
-      video.onclick = () => openPreview('video', video.src || (video.querySelector('source')?.src ?? ''));
+      const v = video as HTMLVideoElement
+      v.style.cursor = 'pointer';
+      v.onclick = () => openPreview('video', v.src || (v.querySelector('source')?.src ?? ''));
     });
   });
 });
@@ -76,20 +78,18 @@ function closePreview() {
   previewType.value = '';
 }
 
-function onBubbleClick(e) {
+function onBubbleClick(e: MouseEvent) {
   // 只处理 video 标签点击
-  if (e.target.tagName === 'VIDEO') {
-    const video = e.target;
+  if ((e.target as HTMLElement).tagName === 'VIDEO') {
+    const video = e.target as HTMLVideoElement;
     // 切换播放/暂停
     if (video.paused) {
       video.play();
       video.muted = true;
     } else {
       video.muted = !video.muted;
-      // 可选：点击播放时自动取消暂停
       if (video.paused) video.play();
     }
-    // 阻止冒泡
     e.stopPropagation();
   }
 }

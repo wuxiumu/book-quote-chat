@@ -9,6 +9,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --mode dev",
+    "test": "vite --mode test",
     "build": "vue-tsc -b && vite build --mode production",
     "build:test": "vue-tsc -b && vite build --mode test",
     "preview": "vite preview"

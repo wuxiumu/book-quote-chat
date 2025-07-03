@@ -4,21 +4,39 @@ import (
 	"book-quote-chat-backend/api"
 	"book-quote-chat-backend/service"
 	"context"
+	"github.com/joho/godotenv"
 	"net/http"
+	"os"
 	"strings"
 )
 
-// 在 main.go 所有 HandleFunc 前增加
+// 支持从 .env 读取允许的跨域地址
 func withCORS(next http.HandlerFunc) http.HandlerFunc {
+	allowedOriginEnv := os.Getenv("ALLOWED_ORIGIN")
+	allowedOrigins := strings.Split(allowedOriginEnv, ",")
 	return func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if origin != "" {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
+		originAllowed := false
+
+		if allowedOriginEnv == "*" {
+			originAllowed = true
+		} else {
+			for _, o := range allowedOrigins {
+				if strings.TrimSpace(o) == origin {
+					originAllowed = true
+					break
+				}
+			}
 		}
+
+		if originAllowed && origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		}
+		w.Header().Set("Vary", "Origin")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -55,6 +73,7 @@ func registerProtectedAPI(pattern string, handler http.HandlerFunc) {
 // 其它路由同理
 
 func main() {
+	godotenv.Load() // 加载 .env 文件
 	service.InitRateLimitersFromEnv()
 	service.LoadUploadExts()
 

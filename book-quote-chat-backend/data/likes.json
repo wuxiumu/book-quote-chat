@@ -40,5 +40,19 @@
     "targetId": "qfljw5",
     "targetType": "quote",
     "created": 1751181047
+  },
+  {
+    "id": "fe7c8b0d-5671-4c18-bb97-12e7f23ea560",
+    "userId": "b0755012-e3be-4f46-9e38-ed2fa102be63",
+    "targetId": "d2",
+    "targetType": "quote",
+    "created": 1751508595
+  },
+  {
+    "id": "4f45a3bc-1427-4083-91db-8d34e950b16a",
+    "userId": "b0755012-e3be-4f46-9e38-ed2fa102be63",
+    "targetId": "d3",
+    "targetType": "quote",
+    "created": 1751508596
   }
 ]

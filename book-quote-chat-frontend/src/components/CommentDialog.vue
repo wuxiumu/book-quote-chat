@@ -21,7 +21,7 @@
     <el-input
         v-model="content"
         type="textarea"
-        rows="4"
+        rows:="4"
         placeholder="请输入评论内容"
         maxlength="200"
         show-word-limit

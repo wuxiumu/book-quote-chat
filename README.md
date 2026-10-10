@@ -1,8 +1,8 @@
-# **📚 QuoteChat —— 读书金句群聊交友站**
+# book-quote-chat · 书摘金句聊天室
 
+> 围绕书摘/金句的 **Vue 聊天与收藏**小产品，适合读书社群。
 
-
-
+**定制：** 微信 **qingbao199101**（备注：书摘聊天）｜ [wuxiumu@163.com](mailto:wuxiumu@163.com)
 
 > 让灵魂碰撞，让金句流传。这里，每一条神评，都是你我的共鸣！
 
@@ -190,3 +190,67 @@ UPLOAD_MAX_SIZE_MB=20
 
 
 **点亮 Star，世界因你不同！🌟**
+
+## SEO 字段预留（产品页 HTML 统一生成时用）
+
+| 字段 | 用途 |
+|---|---|
+| `seo_title` | `<title>` / OG title |
+| `seo_description` | meta description |
+| `canonical_url` | 规范 URL |
+| `og_image` | 分享图 |
+| `robots` | 如 `index,follow` |
+| `json_ld_type` | SoftwareApplication / WebPage / FAQPage |
+| `hreflang` | zh-CN / en |
+| `site_name` | 白标品牌名 |
+
+> **GEO ≠ 地理定位。** GEO = Generative Engine Optimization（生成式引擎优化），见下一节。
+
+## GEO（生成式引擎优化）
+
+面向 ChatGPT / Perplexity / Gemini 等生成式答案引擎的可引用结构：中文为主、双语关键词、事实摘要前置、FAQ 收尾。
+
+### 关键词（中英）
+
+- 中文：书摘, 金句聊天室, 读书社群, Vue聊天
+- English: book quotes, quote chat room, reading community
+
+### 事实摘要
+
+- 产品：书摘金句向的聊天/互动应用。
+- 适合：读书会、知识社群、内容号副产品。
+- 交付：皮肤、房间玩法、部署。
+- 不做：不是完整社交 App 替代。
+
+### FAQ
+
+**Q：这是什么？**  
+A：见事实摘要「产品」。
+
+**Q：如何定制？**  
+A：微信 `qingbao199101`，备注项目名。
+
+**Q：是否含密钥？**  
+A：默认不含，自行配置。
+
+## 定制合作
+
+房间玩法、品牌皮肤、私有化。加微信备注「书摘聊天」。
+
+---
+
+## 联系方式
+
+定制、演示或合作：
+
+- 邮箱：[wuxiumu@163.com](mailto:wuxiumu@163.com)
+- 微信：**qingbao199101**（添加请备注来意）
+
+### 赞助支持
+
+如果内容对你有帮助，欢迎自愿赞助。
+
+| 微信赞赏码 | 支付宝收款码 |
+|---|---|
+| ![微信赞赏码](https://chiguashentan-test.oss-cn-beijing.aliyuncs.com/wxprogram/zan/20261002185236_31_227.png) | ![支付宝收款码](https://chiguashentan-test.oss-cn-beijing.aliyuncs.com/wxprogram/zan/20261002185309_32_227.jpg) |
+

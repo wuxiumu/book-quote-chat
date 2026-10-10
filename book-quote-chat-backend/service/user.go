@@ -9,11 +9,20 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 )
 
-var jwtSecret = []byte("your-secret-key") // 强烈建议用环境变量
+// 未设置 JWT_SECRET 时的本地默认值。生产环境请在 .env 中覆盖。
+var jwtSecret = []byte("your-secret-key")
+
+func currentJWTSecret() []byte {
+	if s := strings.TrimSpace(os.Getenv("JWT_SECRET")); s != "" {
+		return []byte(s)
+	}
+	return jwtSecret
+}
 
 // 随机昵称和头像
 var nicknames = []string{"热心码友", "大前端", "Go小将", "吃瓜群众", "灵魂工程师", "AI玩家"}
@@ -88,7 +97,7 @@ func LoginUser(name, password string) (string, model.User, error) {
 					"group":  u.Group,
 					"exp":    time.Now().Add(24 * time.Hour).Unix(),
 				})
-				tokenStr, err := token.SignedString(jwtSecret)
+				tokenStr, err := token.SignedString(currentJWTSecret())
 				if err != nil {
 					return "", model.User{}, err
 				}
@@ -104,7 +113,10 @@ func LoginUser(name, password string) (string, model.User, error) {
 // JWT验证
 func ParseJWT(tokenStr string) (userID, group string, err error) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-		return jwtSecret, nil
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("无效签名算法")
+		}
+		return currentJWTSecret(), nil
 	})
 	if err != nil || !token.Valid {
 		return "", "", errors.New("无效token")

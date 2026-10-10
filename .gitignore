@@ -2,4 +2,7 @@
 ./book-quote-chat-backend/uploads/
 ./book-quote-chat-backend/.env
 ./book-quote-chat-frontend/.env
+./book-quote-chat-frontend/.env.local
+./book-quote-chat-frontend/.env.production
+./book-quote-chat-frontend/.env.test
 ./tmp/

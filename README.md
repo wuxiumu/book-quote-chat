@@ -61,8 +61,9 @@
 
 ```
 cd book-quote-chat-frontend
+cp .env.example .env.dev
 npm install
-npm run dev         # 本地开发
+npm run dev         # 本地开发，读取 .env.dev
 npm run build       # 生产打包
 ```
 
@@ -74,21 +75,53 @@ npm run build       # 生产打包
 
 ```
 cd book-quote-chat-backend
-go run main.go      # 本地后端服务
+cp .env.example .env
+go run main.go      # 本地后端服务，读取 .env
 ```
 
 
 
 ### **4. .env 配置参考**
 
+示例文件与目录一一对应，勿把真实密钥写进仓库。
+
+`book-quote-chat-frontend/.env.example`
+
+```
+VITE_API_BASE_URL=http://127.0.0.1:8080
+VITE_WS_URL=ws://127.0.0.1:8080/ws
+VITE_UPLOAD_ACCEPT=jpg,jpeg,png,gif,webp,bmp,mp4,webm,ogg
+VITE_AGORA_APP_ID=
+VITE_AGORA_CHANNEL=
+VITE_AGORA_TOKEN=
+VITE_AGORA_UID=
+```
+
+`book-quote-chat-backend/.env.example`
+
+```
+LIKE_LIMIT_MODE=memory
+LIKE_LIMIT_WINDOW=60
+COMMENT_LIMIT_MODE=memory
+COMMENT_LIMIT_WINDOW=30
+REPORT_LIMIT_MODE=memory
+REPORT_LIMIT_WINDOW=300
+LIKE_LIMIT_FILE=data/like_limit.json
+LIKE_LIMIT_REDIS=127.0.0.1:6379
+LIKE_LIMIT_MYSQL=user:password@tcp(127.0.0.1:3306)/book_quote_chat
+ALLOWED_ORIGIN=http://127.0.0.1:5173,http://localhost:5173
+UPLOAD_ACCEPT=jpg,jpeg,png,gif,webp,bmp,mp4,webm,ogg
+JWT_SECRET=change-me
+```
+
+
+
+### **5. 冒烟**
+
 
 
 ```
-VITE_API_BASE_URL=http://localhost:8080
-VITE_WS_URL=ws://localhost:8080/ws
-ALLOWED_ORIGINS=http://localhost:5173,http://yourdomain.com
-UPLOAD_EXTS=jpg,jpeg,png,gif,mp4,mp3
-UPLOAD_MAX_SIZE_MB=20
+bash scripts/smoke.sh
 ```
 
 
